@@ -1,0 +1,7 @@
+configparser
+sys
+os
+gspread
+re
+BeautifulSoup
+HTMLSession
