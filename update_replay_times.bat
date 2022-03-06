@@ -1,1 +1,1 @@
-venv\Scripts\python.exe main_replays.py %*
+venv\Scripts\python.exe src\main_replays.py %*
