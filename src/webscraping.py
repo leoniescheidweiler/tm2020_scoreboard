@@ -1,5 +1,12 @@
+from calendar import monthrange
+from datetime import datetime
+
 from bs4 import BeautifulSoup
 from requests_html import HTMLSession
+
+
+class MapsMissing(Exception):
+    pass
 
 
 def to_seconds(time_str):
@@ -20,6 +27,7 @@ class MapPackWebScraper:
     base_url = 'https://trackmania.exchange'
     user_agent = ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) ' +
                   'Chrome/86.0.4240.198 Safari/537.36 OPR/72.0.3815.487')
+    campaign_map_pack_len = 25
 
     # Map pack websites
     pagination_bar_class = 'windowv2-buttonbar windowv2-buttonbar-center'
@@ -71,8 +79,46 @@ class MapPackWebScraper:
         time_data = html.find('abbr', {'class': self.medals_time_class}).attrs['original-title']
         return [to_seconds(time.split(' ')[1]) for time in time_data.split('<br/>')[1:]]
 
+    def map_pack_len(self, map_pack_url):
+        """
+        Determine the type (Campaign, TOTD, none of those) of the  map pack and return the expected amount
+        of maps in this pack.
+        """
+        tokens = map_pack_url.split('/')[-1].split('-')
+        if tokens[0] in ['summer', 'fall', 'winter', 'spring']:
+            return self.campaign_map_pack_len
+        elif tokens[0] == 'totd':
+            month, year = tokens[-2], int(tokens[-1])
+            try:
+                month = datetime.strptime(month, '%B').month
+            except ValueError:
+                print('WARNING: TOTD map pack detected. Failed to detect the expected amount of maps.')
+                return None
+            else:
+                return monthrange(year, month)[1]
+        else:
+            return None
+
     def get_map_pack_info(self, map_pack_url):
-        pass
+        """
+        Yields a map instance for every map in the given map pack.
+        """
+        print(f'\nStart scraping {map_pack_url} ...')
+        map_count = 0
+        for map_url, map_title in self.get_map_urls_and_titles(map_pack_url):
+            map_medals = self.get_map_medals(map_url)
+            print(f'Collected medal times for map {map_title} ({map_url}).')
+            map_count += 1
+            yield Map(url=map_url, title=map_title, medal_times=map_medals)
+        print(f'{map_count} maps collected from {map_pack_url}.')
+        expected_count = self.map_pack_len(map_pack_url)
+        if expected_count is None:
+            print('Could not calculate expected amount of maps because this map pack is not a campaign '
+                  'or totd map pack.')
+        else:
+            if map_count != expected_count:
+                raise MapsMissing(f'{map_count} were collected but {expected_count} maps are expected '
+                                  f'for map pack {map_pack_url}.')
 
 
 class Map:
@@ -82,22 +128,17 @@ class Map:
 
     medal_order = ['author', 'gold', 'silver', 'bronze']
 
-    def __init__(self, url=None, title=None):
+    def __init__(self, url, title, medal_times):
         self.url = url
         self.title = title
-        self._medal_times = dict()
-
-    @property
-    def medal_times(self):
-        return self._medal_times
-
-    @medal_times.setter
-    def medal_times(self, times_list):
+        assert len(medal_times) == 4
+        self.medal_times = dict()
         for i, medal in enumerate(self.medal_order):
-            self.medal_times[medal] = times_list[i]
+            self.medal_times[medal] = medal_times[i]
 
 
 if __name__ == '__main__':
     t = MapPackWebScraper()
-    urll = 'https://trackmania.exchange/maps/43850/fujiyama'
-    print(t.get_map_medals(urll))
+    urll = 'https://trackmania.exchange/mappack/view/1377/insalan-xvi'
+    for map_ in t.get_map_pack_info(urll):
+        print(map_.medal_times)
