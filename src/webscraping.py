@@ -50,6 +50,13 @@ class MapPackWebScraper:
             r.html.render(sleep=2, timeout=20, script=js_script)
         return BeautifulSoup(r.html.html, features='lxml')
 
+    def get_map_pack_title(self, map_pack_url):
+        """
+        Returns title of a map pack.
+        """
+        html = self.get_html(map_pack_url)
+        return html.find('h1').get_text().strip()
+
     def count_pagination_pages(self, map_pack_url):
         """
         Counts the pagination pages. Subtract 2 because of forwards/backwards buttons.
@@ -81,7 +88,7 @@ class MapPackWebScraper:
 
     def map_pack_len(self, map_pack_url):
         """
-        Determine the type (Campaign, TOTD, none of those) of the  map pack and return the expected amount
+        Determine the type (Campaign, TOTD, none of those) of the map pack and return the expected amount
         of maps in this pack.
         """
         tokens = map_pack_url.split('/')[-1].split('-')
@@ -137,8 +144,14 @@ class Map:
             self.medal_times[medal] = medal_times[i]
 
 
-if __name__ == '__main__':
-    t = MapPackWebScraper()
-    urll = 'https://trackmania.exchange/mappack/view/1377/insalan-xvi'
-    for map_ in t.get_map_pack_info(urll):
-        print(map_.medal_times)
+def collect_map_packs(*map_pack_urls):
+    """
+    Collects every map for every map pack url and stores them in a dictionary (keys: map pack titles,
+    values: list of map instances).
+    """
+    scraper = MapPackWebScraper()
+    map_pack_info = dict()
+    for url in map_pack_urls:
+        map_pack_title = scraper.get_map_pack_title(url)
+        map_pack_info[map_pack_title] = list(scraper.get_map_pack_info(url))
+    return map_pack_info
