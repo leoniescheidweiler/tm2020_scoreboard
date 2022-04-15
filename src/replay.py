@@ -1,4 +1,5 @@
 import os
+import re
 
 from config import Config
 
@@ -16,4 +17,9 @@ class Replay:
         self.file_path = os.path.join(config('Settings', 'replay_path'),
                                       self.file_template.format(uplay_name=config('Settings', 'uplay_name'),
                                                                 track_name=track_name))
-        # TODO: read replay time
+        with open(self.file_path, 'r', encoding='utf-8', errors='ignore') as file:
+            for line in file.readlines():
+                if 'times best' in line:
+                    self.time_ms = float(re.search(r'times best="(\d+)"', line).group(1))
+                    self.time_s = self.time_ms / 1000
+                    break
