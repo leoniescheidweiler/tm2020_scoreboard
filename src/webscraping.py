@@ -144,14 +144,14 @@ class Map:
             self.medal_times[medal] = medal_times[i]
 
 
-def collect_map_packs(*map_pack_urls):
+def collect_map_packs(*map_packs_urls):
     """
     Collects every map for every map pack url and stores them in a dictionary (keys: map pack titles,
     values: list of map instances).
     """
     scraper = MapPackWebScraper()
-    map_pack_info = dict()
-    for url in map_pack_urls:
+    map_packs_info = dict()
+    for url in map_packs_urls:
         map_pack_title = scraper.get_map_pack_title(url)
-        map_pack_info[map_pack_title] = list(scraper.get_map_pack_info(url))
-    return map_pack_info
+        map_packs_info[map_pack_title] = list(scraper.get_map_pack_info(url))
+    return map_packs_info

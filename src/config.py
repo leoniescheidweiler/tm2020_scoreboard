@@ -40,12 +40,8 @@ class Config:
         except AssertionError:
             raise ValueError('replay_path does not exist.')
 
-        if map_packs := self._data['Settings']['map_packs']:
-            map_packs = [map_pack.strip() for map_pack in map_packs.split(',')]
-            self._data['Settings']['map_packs'] = map_packs
-        else:
-            # TODO: if map_packs is empty get all map pack names from the google spreadsheet
-            pass
+        self._data['Settings']['map_packs'] = [map_pack.strip() for map_pack in
+                                               self._data['Settings']['map_packs'].split(',') if map_pack]
 
     def __call__(self, section, key):
         return self._data[section][key]
