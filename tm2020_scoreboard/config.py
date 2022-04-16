@@ -14,15 +14,16 @@ class Config:
     def __init__(self):
 
         self._data = {}
+        config_dir = os.path.dirname(os.path.realpath(__file__))
 
         try:
-            assert os.path.exists(self.config_file)
+            assert os.path.exists(os.path.join(config_dir, self.config_file))
         except AssertionError:
             raise FileNotFoundError(f'{self.config_file} was not found in '
                                     f'{os.path.dirname(os.path.realpath(__file__))}.')
         else:
             config = configparser.ConfigParser()
-            config.read(self.config_file)
+            config.read(os.path.join(config_dir, self.config_file))
 
         for section in config.sections():
             self._data[section] = {}

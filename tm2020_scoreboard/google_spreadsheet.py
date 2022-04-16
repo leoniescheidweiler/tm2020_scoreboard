@@ -1,8 +1,10 @@
+import os
+
 import gspread
 from gspread.utils import rowcol_to_a1
 
-from config import Config
-from replay import Replay
+from .config import Config
+from .replay import Replay
 
 
 class GoogleSpreadsheet:
@@ -16,8 +18,10 @@ class GoogleSpreadsheet:
 
     def __init__(self):
         self.config = Config()
+        credentials_dir = os.path.dirname(os.path.realpath(__file__))
         try:
-            service_acc = gspread.service_account(self.config('Settings', 'service_account_json'))
+            service_acc = gspread.service_account(os.path.join(credentials_dir,
+                                                               self.config('Settings', 'service_account_json')))
         except FileNotFoundError:
             raise FileNotFoundError(f'{self.config("Settings", "service_account_json")} does not exist. '
                                     'Specify a valid .json file.')
@@ -81,8 +85,3 @@ class GoogleSpreadsheet:
             new_records_total += new_records_map_pack
             print(f'{worksheet.title}: Updated {new_records_map_pack} times.')
         print(f'Updated {new_records_total} times in total. Congratulations!')
-
-
-if __name__ == '__main__':
-    t = GoogleSpreadsheet()
-    t.synchronize_replay_times()
