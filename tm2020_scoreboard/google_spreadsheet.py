@@ -3,8 +3,9 @@ import os
 import gspread
 from gspread.utils import rowcol_to_a1
 
-from .config import Config
-from .replay import Replay
+from tm2020_scoreboard.config import Config
+from tm2020_scoreboard.replay import Replay
+from tm2020_scoreboard.webscraping import collect_map_packs
 
 
 class GoogleSpreadsheet:
@@ -79,9 +80,46 @@ class GoogleSpreadsheet:
             # replace inf with empty strings and reformat list
             times_s = [[time] if time != float('inf') else [''] for time in times_s]
             # batch update new times
-            start_cell_times = rowcol_to_a1(self.header_rows + 1, player_col)
-            stop_cell_times = rowcol_to_a1(self.header_rows + len(track_names), player_col)
-            worksheet.update(f'{start_cell_times}:{stop_cell_times}', times_s)
+            start_cell = rowcol_to_a1(self.header_rows + 1, player_col)
+            stop_cell = rowcol_to_a1(self.header_rows + len(track_names), player_col)
+            worksheet.update(f'{start_cell}:{stop_cell}', times_s)
             new_records_total += new_records_map_pack
             print(f'{worksheet.title}: Updated {new_records_map_pack} times.')
         print(f'Updated {new_records_total} times in total. Congratulations!')
+
+    def create_worksheets_for_map_packs(self, map_packs_urls):
+        """
+        Creates a worksheet for every map pack in map_packs_urls and fills in the map names and the
+        corresponding medal times.
+        """
+        map_packs_info = collect_map_packs(map_packs_urls)
+        for map_pack_title, maps in map_packs_info.items():
+            try:
+                worksheet = self.open_worksheet(map_pack_title)
+            except gspread.exceptions.WorksheetNotFound:
+                # TODO: create a worksheet with a given template
+                raise gspread.exceptions.WorksheetNotFound(f'Worksheet {map_pack_title} does not exist.')
+            else:
+                while True:
+                    user_input = input(f'Worksheet {map_pack_title} already exists. Would you like to '
+                                       'overwrite it? [y/n]\n').lower()
+                    if user_input in ['y', 'n']:
+                        break
+                if user_input == 'n':
+                    continue
+                elif user_input == 'y':
+                    # TODO: delete existing worksheet and create a new one with a given template
+                    pass
+                else:
+                    raise ValueError(f'Unexpected user input "{user_input}" occurred.')
+
+            data_to_update = []
+            for map_ in maps:
+                data_to_update.append([
+                    map_.medal_times['bronze'], map_.medal_times['silver'], map_.medal_times['gold'],
+                    map_.medal_times['author'], map_.title
+                ])
+            start_cell = rowcol_to_a1(self.header_rows + 1, 1)
+            stop_cell = rowcol_to_a1(self.header_rows + len(maps), self.track_name_col)
+            worksheet.update(f'{start_cell}:{stop_cell}', data_to_update)
+            print(f'Created new worksheet for map pack {map_pack_title}.')

@@ -1,16 +1,15 @@
 import argparse
 
-from .google_spreadsheet import GoogleSpreadsheet
+from tm2020_scoreboard.google_spreadsheet import GoogleSpreadsheet
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Provides command line functionality for tm2020_scoreboard.')
-    action_arg = parser.add_argument('action', type=str, help='Choose between "synchronize" and "create_worksheets".')
+    parser.add_argument('-s', '--synchronize', action='store_true', help='Synchronizes your replay times.')
+    parser.add_argument('-cw', '--create_worksheets', nargs='+', help='Creates worksheets for the given map pack urls.')
     args = parser.parse_args()
-    if args.action.lower() == 'synchronize':
-        GoogleSpreadsheet().synchronize_replay_times()
-    elif args.action.lower() == 'create_worksheets':
-        # TODO: add command line functionality for creating worksheets
-        raise NotImplementedError
-    else:
-        parser.error(f'{args.action} is an invalid argument. {action_arg.help}')
+    gs = GoogleSpreadsheet()
+    if args.synchronize:
+        gs.synchronize_replay_times()
+    if args.create_worksheets:
+        gs.create_worksheets_for_map_packs(args.create_worksheets)

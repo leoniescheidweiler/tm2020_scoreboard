@@ -1,7 +1,7 @@
 import os
 import re
 
-from .config import Config
+from tm2020_scoreboard.config import Config
 
 
 class Replay:
