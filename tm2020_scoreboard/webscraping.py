@@ -144,7 +144,7 @@ class Map:
             self.medal_times[medal] = medal_times[i]
 
 
-def collect_map_packs(*map_packs_urls):
+def collect_map_packs(map_packs_urls):
     """
     Collects every map for every map pack url and stores them in a dictionary (keys: map pack titles,
     values: list of map instances).
