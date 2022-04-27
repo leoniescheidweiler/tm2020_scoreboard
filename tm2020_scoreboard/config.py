@@ -36,10 +36,13 @@ class Config:
         except AssertionError:
             raise ValueError('uplay_name is empty.')
 
-        try:
-            assert os.path.exists(self._data['Settings']['replay_path'])
-        except AssertionError:
-            raise ValueError('replay_path does not exist.')
+        if self._data['Settings']['replay_path']:
+            try:
+                assert os.path.exists(self._data['Settings']['replay_path'])
+            except AssertionError:
+                raise ValueError('replay_path does not exist.')
+        else:
+            self._data['Settings']['replay_path'] = os.path.expanduser(r'~/Documents/Trackmania2020/Replays/Autosaves')
 
         self._data['Settings']['map_packs'] = [map_pack.strip() for map_pack in
                                                self._data['Settings']['map_packs'].split(',') if map_pack]
